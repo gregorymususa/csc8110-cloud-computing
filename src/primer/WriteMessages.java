@@ -73,6 +73,16 @@ public class WriteMessages {
 		}
 	}
 	
+	public static boolean ruleExists(String ruleInfoName,SubscriptionInfo subInfo, TopicInfo topicInfo, ServiceBusContract service) throws ServiceException {
+		boolean ruleExists = false;
+		for(RuleInfo ri : service.listRules(topicInfo.getPath(), subInfo.getName()).getItems()) {
+			if(ri.getName().equalsIgnoreCase(ruleInfoName)) {
+				ruleExists = true;
+			}
+		}
+		return ruleExists;
+	}
+	
 	/**
 	 * Checks if a subscription exists, within the specified Service Bus Contract and Topic
 	 * @param subInfo is the subscription that will be checked, for existence

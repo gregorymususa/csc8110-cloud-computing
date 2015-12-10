@@ -64,7 +64,7 @@ public class SmartSpeedCamera {
 			
 			//Set Rules
 			RuleInfo ruleInfo = new RuleInfo("isCameraMessage");
-			ruleInfo.withSqlExpressionFilter("isCameraMessage = true");
+			ruleInfo.withSqlExpressionFilter("isCameraMessage = 1");
 			
 			if(!(WriteMessages.ruleExists(ruleInfo.getName(),subInfo,topicInfo,service))) {
 				CreateRuleResult ruleResult = service.createRule(topicName, subName, ruleInfo);
@@ -76,13 +76,13 @@ public class SmartSpeedCamera {
 //			}
 			
 			// Create message, passing a string message for the body
-		    BrokeredMessage message = new BrokeredMessage(this.uniqueIdentifier + "," + this.streetName + "," + this.city + "," + this.areasMaxMPH);
+		    BrokeredMessage message = new BrokeredMessage(this.uniqueIdentifier.toString() + "," + this.streetName + "," + this.city + "," + this.areasMaxMPH.toString());
 		    
 		    // Set some additional custom app-specific property
-		    message.setProperty("isCameraMessage", "true");
+		    message.setProperty("isCameraMessage", 1);
 		    
 		    // Send message to the topic
-		    service.sendTopicMessage(topicInfo.getPath(), message);
+		    service.sendTopicMessage(topicName, message);
 		    
 		} catch (TopicExistsException | ServiceException e) {
 			System.err.println(e.getMessage());

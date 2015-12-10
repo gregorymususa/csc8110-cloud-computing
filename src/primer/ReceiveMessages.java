@@ -78,8 +78,7 @@ public class ReceiveMessages {
 	    Configuration config = ServiceBusConfiguration.configureWithSASAuthentication("gregorym","RootManageSharedAccessKey","/RD1rhL/bNXefoNBZ6pbv97OhYNx9czsvO7J6eM/mFc=",".servicebus.windows.net");
 	    ServiceBusContract service = ServiceBusService.create(config);
 	    
-	    
-		try {
+	    try {
 			//Initialise Topic
 			String topicName = "SmartSpeedCameras";
 			TopicInfo topicInfo = WriteMessages.initializeTopic(topicName,service);
@@ -87,10 +86,11 @@ public class ReceiveMessages {
 			//Initialise Subscriptions
 			String subName = "CameraMessages";
 			SubscriptionInfo subInfo = WriteMessages.initializeSubscription(subName, topicInfo, service);
-			
+						
 			while(true) {
 				ReceiveSubscriptionMessageResult  resultSubMsg = service.receiveSubscriptionMessage(topicInfo.getPath(),subInfo.getName(),opts);
 				BrokeredMessage message = resultSubMsg.getValue();
+				
 				if((message != null) && (message.getMessageId() != null)) {
 					InputStream inputStream = message.getBody();
 					

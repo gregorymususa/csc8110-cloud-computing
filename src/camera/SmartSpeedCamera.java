@@ -1,5 +1,7 @@
 package camera;
 
+import java.util.Calendar;
+
 import primer.WriteMessages;
 
 import com.microsoft.windowsazure.Configuration;
@@ -25,7 +27,9 @@ public class SmartSpeedCamera {
 	private Integer uniqueIdentifier;
 	private String streetName;
 	private String city;
-	private Integer areasMaxMPH;
+	private Integer speedLimitMPH;
+	private int io;
+	private long startupTimestamp;
 	
 	/**
 	 * Constructor for SmartSpeedCamera class
@@ -38,7 +42,31 @@ public class SmartSpeedCamera {
 		this.uniqueIdentifier = uid;
 		this.streetName = street;
 		this.city = city;
-		this.areasMaxMPH = maxMPH;
+		this.speedLimitMPH = maxMPH;
+		this.io = 0;
+		this.startup();
+	}
+	
+	private void startup() {
+		this.io = 1;
+		this.startupTimestamp = Calendar.getInstance().getTimeInMillis();
+		this.broadcast();
+	}
+	
+	/**
+	 * Used to change Camera configurations e.g. Speed limit of a given area that the camera is monitoring
+	 * @param uid
+	 * @param street
+	 * @param city
+	 * @param maxMPH
+	 */
+	public void restart(Integer uid, String street, String city, Integer maxMPH) {
+		this.uniqueIdentifier = uid;
+		this.streetName = street;
+		this.city = city;
+		this.speedLimitMPH = maxMPH;
+		this.io = 0;
+		this.startup();
 	}
 	
 	/**
@@ -46,7 +74,7 @@ public class SmartSpeedCamera {
 	 * Unique Identifier, Street Name, Town/City, Maximum speed limit for the area they monitor, 
 	 * and the date and time (timestamp) the Smart Speed Camera started up
 	 * 
-	 * The message will be Comma Delimited (CSV) — uid,street,city,maxMPH (example: 5430,Claremont Road,Newcastle,70)
+	 * The message will be Comma Delimited (CSV) — uid,street,city,speedLimitMPH,startupTimestamp (example: 5430,Claremont Road,Newcastle,70)
 	 */
 	public void broadcast() {
 		//Create Service Bus Contract
@@ -76,7 +104,7 @@ public class SmartSpeedCamera {
 //			}
 			
 			// Create message, passing a string message for the body
-		    BrokeredMessage message = new BrokeredMessage(this.uniqueIdentifier.toString() + "," + this.streetName + "," + this.city + "," + this.areasMaxMPH.toString());
+		    BrokeredMessage message = new BrokeredMessage(this.uniqueIdentifier.toString() + "," + this.streetName + "," + this.city + "," + this.speedLimitMPH.toString() + "," + this.startupTimestamp);
 		    
 		    // Set some additional custom app-specific property
 		    message.setProperty("isCameraMessage", 1);
@@ -95,6 +123,6 @@ public class SmartSpeedCamera {
 	 */
 	public static void main(String[] args) {
 		SmartSpeedCamera cam1 = new SmartSpeedCamera(5430, "Claremont Road", "Newcastle upon Tyne", 20);
-		cam1.broadcast();
+		
 	}
 }

@@ -54,19 +54,34 @@ public class SmartSpeedCamera {
 	}
 	
 	/**
-	 * Used to change Camera configurations e.g. Speed limit of a given area that the camera is monitoring
-	 * @param uid
-	 * @param street
-	 * @param city
-	 * @param maxMPH
+	 * Use to change camera's speed limit — causes camera to restart (issuing, a new timestamp)
+	 * @param maxMPH new speed limit
 	 */
-	public void restart(Integer uid, String street, String city, Integer maxMPH) {
-		this.uniqueIdentifier = uid;
-		this.streetName = street;
-		this.city = city;
+	public void changeSpeedLimit(Integer maxMPH) {
 		this.speedLimitMPH = maxMPH;
 		this.io = 0;
 		this.startup();
+	}
+	
+	/**
+	 * Change street, and let the system know that street has been changed
+	 * Useful when camera is mounted within police vehicle
+	 * @param newStreetName is the name of the new street, where the camera is currently located
+	 */
+	public void changeStreet(String newStreetName) {
+		this.streetName = newStreetName;
+		this.broadcast();
+	}
+	
+	/**
+	 * Change city, and let the system know that camera's location has been changed
+	 * Useful when camera is mounted within police vehicle
+	 * @param newCityName is the name of the new city, where the camera is currently located
+	 */
+	public void changeCity(String newCityName) {
+		//TODO
+		this.city = newCityName;
+		this.broadcast();
 	}
 	
 	/**
@@ -122,7 +137,14 @@ public class SmartSpeedCamera {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		SmartSpeedCamera cam1 = new SmartSpeedCamera(5430, "Claremont Road", "Newcastle upon Tyne", 20);
-		
+		SmartSpeedCamera cam1 = new SmartSpeedCamera(5430, "Claremont Road", "Newcastle upon Tyne", 40);
+		try {
+			Thread.sleep(2000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		cam1.changeSpeedLimit(20);
+		cam1.changeStreet("Stepney Lane");
 	}
 }

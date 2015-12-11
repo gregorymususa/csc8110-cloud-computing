@@ -3,6 +3,7 @@ package camera;
 import java.util.Calendar;
 
 import vehicle.Vehicle;
+import vehicle.VehicleGenerator;
 import messaging.WriteMessages;
 
 import com.microsoft.windowsazure.Configuration;
@@ -189,8 +190,8 @@ public class SmartSpeedCamera {
 		cam1.changeSpeedLimit(20);
 		cam1.changeStreet("Stepney Lane");
 		
-		Vehicle vehc1 = new Vehicle("YI00 RAM", "Car", 30);
-		Vehicle vehc2 = new Vehicle("BD51 SMR", "Car", 40);
+		Vehicle vehc1 = VehicleGenerator.getRandomVehicle();
+		Vehicle vehc2 = VehicleGenerator.getRandomVehicle();
 		
 		cam1.recordPassingVehicle(vehc1.getPlate(), vehc1.getType(), vehc1.getSpeed());
 		cam1.recordPassingVehicle(vehc2.getPlate(), vehc2.getType(), vehc2.getSpeed());

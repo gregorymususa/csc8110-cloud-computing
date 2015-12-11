@@ -2,7 +2,8 @@ package camera;
 
 import java.util.Calendar;
 
-import primer.WriteMessages;
+import vehicle.Vehicle;
+import messaging.WriteMessages;
 
 import com.microsoft.windowsazure.Configuration;
 import com.microsoft.windowsazure.exception.ServiceException;
@@ -18,7 +19,7 @@ import com.microsoft.windowsazure.services.servicebus.models.TopicInfo;
 import customservicebusexceptions.TopicExistsException;
 
 /**
- * 
+ * Class that implements the Smart Speed Camera
  * @author Gregory Mususa (081587717)
  *
  */
@@ -47,7 +48,10 @@ public class SmartSpeedCamera {
 		this.startup();
 	}
 	
-	private void startup() {
+	/**
+	 * Starts up the camera, and broadcasts to the rest of the system, camera's uid, street name, city, speed limit, startupTimestamp
+	 */
+	private final void startup() {
 		this.io = 1;
 		this.startupTimestamp = Calendar.getInstance().getTimeInMillis();
 		this.broadcast();
@@ -79,9 +83,51 @@ public class SmartSpeedCamera {
 	 * @param newCityName is the name of the new city, where the camera is currently located
 	 */
 	public void changeCity(String newCityName) {
-		//TODO
 		this.city = newCityName;
 		this.broadcast();
+	}
+	
+	/**
+	 * Record vehicle passing camera, and send these details to the Service Bus
+	 * @param vehiclePlate
+	 * @param vehicleType
+	 * @param speed
+	 */
+	public void recordPassingVehicle(String vehiclePlate, String vehicleType, Integer speed) {
+		//Create Service Bus Contract
+		Configuration config = ServiceBusConfiguration.configureWithSASAuthentication("gregorym","RootManageSharedAccessKey","/RD1rhL/bNXefoNBZ6pbv97OhYNx9czsvO7J6eM/mFc=",".servicebus.windows.net");
+		ServiceBusContract service = ServiceBusService.create(config);
+		
+		try {
+			//Initialise Topic
+			String topicName = "SmartSpeedCameras";
+			TopicInfo topicInfo = WriteMessages.initializeTopic(topicName,service);
+			
+			//Initialise Subscriptions
+			String subName = "CameraVehicleMonitor";
+			SubscriptionInfo subInfo = WriteMessages.initializeSubscription(subName, topicInfo, service);
+			
+			//Set Rules
+			RuleInfo ruleInfo = new RuleInfo("vehicleHasPassed");
+			ruleInfo.withSqlExpressionFilter("vehicleHasPassed = 1");
+			
+			if(!(WriteMessages.ruleExists(ruleInfo.getName(),subInfo,topicInfo,service))) {
+				CreateRuleResult ruleResult = service.createRule(topicName, subName, ruleInfo);
+				service.deleteRule(topicName, subName, "$Default");
+			}
+			
+			// Create message, passing a string message for the body
+		    BrokeredMessage message = new BrokeredMessage(vehiclePlate + "," + vehicleType + "," + speed + "," + this.uniqueIdentifier.toString() + "," + this.streetName + "," + this.city + "," + this.speedLimitMPH.toString() + "," + this.startupTimestamp);
+		    
+		    // Set some additional custom app-specific property
+		    message.setProperty("vehicleHasPassed", 1);
+		    
+		    // Send message to the topic
+		    service.sendTopicMessage(topicName, message);
+		    
+		} catch (TopicExistsException | ServiceException e) {
+			System.err.println(e.getMessage());
+		}
 	}
 	
 	/**
@@ -113,10 +159,6 @@ public class SmartSpeedCamera {
 				CreateRuleResult ruleResult = service.createRule(topicName, subName, ruleInfo);
 				service.deleteRule(topicName, subName, "$Default");
 			}
-//			if(!(ruleInfo.getName().equalsIgnoreCase(service.getRule(topicInfo.getPath(), subInfo.getName(), ruleInfo.getName()).getValue().getName()))) {
-//				CreateRuleResult ruleResult = service.createRule(topicName, subName, ruleInfo);
-//				service.deleteRule(topicName, subName, "$Default");
-//			}
 			
 			// Create message, passing a string message for the body
 		    BrokeredMessage message = new BrokeredMessage(this.uniqueIdentifier.toString() + "," + this.streetName + "," + this.city + "," + this.speedLimitMPH.toString() + "," + this.startupTimestamp);
@@ -134,7 +176,7 @@ public class SmartSpeedCamera {
 	
 	/**
 	 * Method created, to test SmartSpeedCamera
-	 * @param args
+	 * @param args String arguments
 	 */
 	public static void main(String[] args) {
 		SmartSpeedCamera cam1 = new SmartSpeedCamera(5430, "Claremont Road", "Newcastle upon Tyne", 40);
@@ -146,5 +188,11 @@ public class SmartSpeedCamera {
 		}
 		cam1.changeSpeedLimit(20);
 		cam1.changeStreet("Stepney Lane");
+		
+		Vehicle vehc1 = new Vehicle("YI00 RAM", "Car", 30);
+		Vehicle vehc2 = new Vehicle("BD51 SMR", "Car", 40);
+		
+		cam1.recordPassingVehicle(vehc1.getPlate(), vehc1.getType(), vehc1.getSpeed());
+		cam1.recordPassingVehicle(vehc2.getPlate(), vehc2.getType(), vehc2.getSpeed());
 	}
 }

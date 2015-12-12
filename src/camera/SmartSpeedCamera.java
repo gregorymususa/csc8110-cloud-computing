@@ -1,6 +1,8 @@
 package camera;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Random;
 
 import vehicle.Vehicle;
 import vehicle.VehicleGenerator;
@@ -181,19 +183,25 @@ public class SmartSpeedCamera {
 	 */
 	public static void main(String[] args) {
 		SmartSpeedCamera cam1 = new SmartSpeedCamera(5430, "Claremont Road", "Newcastle upon Tyne", 40);
-		try {
-			Thread.sleep(2000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 		cam1.changeSpeedLimit(20);
 		cam1.changeStreet("Stepney Lane");
 		
-		Vehicle vehc1 = VehicleGenerator.getRandomVehicle();
-		Vehicle vehc2 = VehicleGenerator.getRandomVehicle();
+		SmartSpeedCamera cam2 = new SmartSpeedCamera(5431, "Walton Terrace", "Newcastle upon Tyne", 30);
 		
-		cam1.recordPassingVehicle(vehc1.getPlate(), vehc1.getType(), vehc1.getSpeed());
-		cam1.recordPassingVehicle(vehc2.getPlate(), vehc2.getType(), vehc2.getSpeed());
+		ArrayList<SmartSpeedCamera> cams = new ArrayList<SmartSpeedCamera>();
+		cams.add(cam1);
+		cams.add(cam2);
+		
+		Random rnd = new Random();
+		
+		try {
+			for(int i=0; i < 12;i+=1) {
+				Thread.sleep(10000);
+				Vehicle vehc = VehicleGenerator.getRandomVehicle();
+				cams.get(rnd.nextInt(cams.size())).recordPassingVehicle(vehc.getPlate(), vehc.getType(), vehc.getSpeed());
+			}
+		} catch (InterruptedException e) {
+			System.err.println(e.getMessage());
+		}
 	}
 }

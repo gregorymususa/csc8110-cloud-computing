@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Random;
 
+import nosqlconsumer.Consumer;
 import vehicle.Vehicle;
 import vehicle.VehicleGenerator;
 import messaging.WriteMessages;
@@ -182,6 +183,9 @@ public class SmartSpeedCamera {
 	 * @param args String arguments
 	 */
 	public static void main(String[] args) {
+		Thread consumerThread = new Thread(new Consumer());
+		consumerThread.start();
+		
 		SmartSpeedCamera cam1 = new SmartSpeedCamera(5430, "Claremont Road", "Newcastle upon Tyne", 40);
 		cam1.changeSpeedLimit(20);
 		cam1.changeStreet("Stepney Lane");

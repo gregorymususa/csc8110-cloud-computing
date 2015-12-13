@@ -39,8 +39,8 @@ public class ReceiveMessages {
 			TopicInfo topicInfo = WriteMessages.initializeTopic(topicName,service);
 			
 			//Initialise Subscriptions
-			String subName = "CameraMessages";//registration
-//			String subName = "CameraVehicleMonitor";//sighting
+//			String subName = "CameraMessages";//registration
+			String subName = "CameraVehicleMonitor";//sighting
 			SubscriptionInfo subInfo = WriteMessages.initializeSubscription(subName, topicInfo, service);
 						
 			while(true) {

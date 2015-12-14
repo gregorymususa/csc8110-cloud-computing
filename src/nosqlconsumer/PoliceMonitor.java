@@ -3,6 +3,7 @@ package nosqlconsumer;
 import java.io.InputStream;
 import java.util.Scanner;
 
+import threadflag.ThreadFlag;
 import messaging.WriteMessages;
 
 import com.microsoft.windowsazure.Configuration;
@@ -33,38 +34,63 @@ public class PoliceMonitor implements Runnable {
 
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
+		
 		
 	}
 	
-	public void readSpeedingVehicles(ServiceBusContract service, ReceiveMessageOptions opts) throws TopicExistsException, ServiceException {
+	public static void printSpeedingVehicles() {
+		//Setup PEEK_LOCK versus ReceiveAndDelete model
+		ReceiveMessageOptions opts = ReceiveMessageOptions.DEFAULT;
+		opts.setReceiveMode(ReceiveMode.PEEK_LOCK);
+					    
+		//Create Service Bus Contract
+		Configuration config = ServiceBusConfiguration.configureWithSASAuthentication("gregorym","RootManageSharedAccessKey","/RD1rhL/bNXefoNBZ6pbv97OhYNx9czsvO7J6eM/mFc=",".servicebus.windows.net");
+		ServiceBusContract service = ServiceBusService.create(config);
+				
 		//Initialise Topic
-		String topicName = "SmartSpeedCameras";
-		TopicInfo topicInfo = WriteMessages.initializeTopic(topicName,service);
-				
-		//Initialise Subscriptions
-		String subName = "SpeedingVehicles";
-		SubscriptionInfo subInfo = WriteMessages.initializeSubscription(subName, topicInfo, service);
-				
-//		String tableName = "cameraregistrations";
-				
-		while(true) {
-			ReceiveSubscriptionMessageResult  resultSubMsg = service.receiveSubscriptionMessage(topicInfo.getPath(),subInfo.getName(),opts);
-			BrokeredMessage message = resultSubMsg.getValue();
+		try {
+			String topicName = "SmartSpeedCameras";
+			TopicInfo topicInfo;
+			topicInfo = WriteMessages.initializeTopic(topicName,service);
+			
+			
+			//Initialise Subscriptions
+			String subName = "SpeedingVehicles";
+			SubscriptionInfo subInfo = WriteMessages.initializeSubscription(subName, topicInfo, service);
+			
 					
-			if((message != null) && (message.getMessageId() != null)) {
-				InputStream inputStream = message.getBody();
-				
-				Scanner scanner = new Scanner(inputStream);
-				while(scanner.hasNextLine()) {
-					System.out.println(scanner.nextLine());
+			while(true) {
+				ReceiveSubscriptionMessageResult  resultSubMsg = service.receiveSubscriptionMessage(topicInfo.getPath(),subInfo.getName(),opts);
+				BrokeredMessage message = resultSubMsg.getValue();
+						
+				if((message != null) && (message.getMessageId() != null)) {
+					InputStream inputStream = message.getBody();
+					
+					Scanner scanner = new Scanner(inputStream);
+					while(scanner.hasNextLine()) {
+						String line = scanner.nextLine();
+						String[] line_explode = line.split(",");
+						
+						Integer speed = Integer.parseInt(line_explode[2]);
+						Double speedLimit = Integer.parseInt(line_explode[6]) * 1.1;
+						
+						if(speed >= speedLimit) {
+							System.out.println(line + "\t PRIORITY");
+						}
+						else {
+							System.out.println(line);
+						}
+					}
+					scanner.close();
+					service.deleteMessage(message);
 				}
-				scanner.close();
-				service.deleteMessage(message);
+				else {
+					System.out.print("\n");
+					break;
+				}
 			}
-			else {
-				break;
-			}
+		} catch (TopicExistsException | ServiceException e) {
+			System.err.println(e.getMessage());
 		}
 	}
 	
@@ -73,21 +99,7 @@ public class PoliceMonitor implements Runnable {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		PoliceMonitor monitor = new PoliceMonitor();
 		
-		//Setup PEEK_LOCK versus ReceiveAndDelete model
-		ReceiveMessageOptions opts = ReceiveMessageOptions.DEFAULT;
-		opts.setReceiveMode(ReceiveMode.PEEK_LOCK);
-			    
-		//Create Service Bus Contract
-		Configuration config = ServiceBusConfiguration.configureWithSASAuthentication("gregorym","RootManageSharedAccessKey","/RD1rhL/bNXefoNBZ6pbv97OhYNx9czsvO7J6eM/mFc=",".servicebus.windows.net");
-		ServiceBusContract service = ServiceBusService.create(config);
-		
-		try {
-			monitor.readSpeedingVehicles(service, opts);
-		} catch (TopicExistsException | ServiceException e) {
-			System.out.println(e.getMessage());
-		}
 	}
 
 }

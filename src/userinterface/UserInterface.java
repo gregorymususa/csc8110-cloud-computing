@@ -4,6 +4,7 @@ import java.util.Scanner;
 
 import camera.SmartSpeedCamera;
 import nosqlconsumer.Consumer;
+import nosqlconsumer.PoliceMonitor;
 import nosqlreader.StorageReader;
 import threadflag.ThreadFlag;
 
@@ -28,7 +29,8 @@ public class UserInterface {
 			System.out.println("Menu Options" + 
 			"\n" + "Enter \"A\" to start Cameras" +
 			"\n" + "Enter \"B\" to start NoSQL Consumers" +
-			"\n" + "Enter \"C\" to see all operating Cameras");
+			"\n" + "Enter \"C\" to see all operating Cameras" +
+			"\n" + "Enter \"D\" to see all Speeding Vehicles");
 			
 			if(scanner.hasNextLine()) {
 				input = scanner.nextLine();
@@ -41,7 +43,9 @@ public class UserInterface {
 				else if("C".equalsIgnoreCase(input)) {
 					StorageReader.getAllOperatingCameras();
 				}
-				
+				else if("D".equalsIgnoreCase(input)) {
+					PoliceMonitor.printSpeedingVehicles();
+				}
 			}
 		}
 		ThreadFlag.stop();

@@ -4,6 +4,7 @@ import java.util.Scanner;
 
 import camera.SmartSpeedCamera;
 import nosqlconsumer.Consumer;
+import nosqlreader.StorageReader;
 import threadflag.ThreadFlag;
 
 /**
@@ -38,7 +39,7 @@ public class UserInterface {
 					consumerThread.start();
 				}
 				else if("C".equalsIgnoreCase(input)) {
-					//TODO - part 3
+					StorageReader.getAllOperatingCameras();
 				}
 				
 			}

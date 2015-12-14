@@ -19,6 +19,8 @@ import customservicebusexceptions.TopicExistsException;
 
 /**
  * Class that is mainly used for testing the receipt of messages
+ * 
+ * Used Peek Lock, because we don't want to miss any drivers going above the speed limit
  * @author Gregory Mususa (081587717)
  *
  */

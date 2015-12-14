@@ -3,6 +3,7 @@ package nosqlconsumer;
 import java.io.InputStream;
 import java.util.Scanner;
 
+import threadflag.ThreadFlag;
 import messaging.WriteMessages;
 
 import com.microsoft.windowsazure.Configuration;
@@ -34,9 +35,11 @@ import entities.SightingEntity;
  */
 public class Consumer implements Runnable {
 
+	/**
+	 * The method that executes, when this class is started as a thread
+	 */
 	public void run() {
-		while(true) {
-			//Setup PEEK_LOCK versus ReceiveAndDelete model
+		while(ThreadFlag.isRunning()) {
 			ReceiveMessageOptions opts = ReceiveMessageOptions.DEFAULT;
 		    opts.setReceiveMode(ReceiveMode.PEEK_LOCK);
 		    
@@ -83,28 +86,28 @@ public class Consumer implements Runnable {
 		   cloudTable.execute(insertCameraRegistration);
 		   
 		   /*TRACE — PART 3*/
-		   for(String s :tableClient.listTables()) {
-			   // Define constants for filters.
-			   final String PARTITION_KEY = "PartitionKey";
-			   final String ROW_KEY = "RowKey";
-			   final String TIMESTAMP = "Timestamp";
-			   // Create a filter condition where the partition key is "Smith".
-			   String partitionFilter = TableQuery.generateFilterCondition(
-					   PARTITION_KEY, 
-					   QueryComparisons.EQUAL,
-					   "Newcastle upon Tyne");
-			   
-			   // Specify a partition query, using "Smith" as the partition key filter.
-			   TableQuery<CameraRegistrationEntity> partitionQuery = TableQuery.from(CameraRegistrationEntity.class).where(partitionFilter);
-		
-			   // Loop through the results, displaying information about the entity.
-			   for (CameraRegistrationEntity entity : cloudTable.execute(partitionQuery)) {
-				   System.out.println(entity.getPartitionKey() +
-						   " " + entity.getRowKey() + 
-						   "\t" + entity.getStreet() +
-						   "\t" + entity.getSpeedLimit());
-			   }
-		   }
+//		   for(String s :tableClient.listTables()) {
+//			   // Define constants for filters.
+//			   final String PARTITION_KEY = "PartitionKey";
+//			   final String ROW_KEY = "RowKey";
+//			   final String TIMESTAMP = "Timestamp";
+//			   // Create a filter condition where the partition key is "Smith".
+//			   String partitionFilter = TableQuery.generateFilterCondition(
+//					   PARTITION_KEY, 
+//					   QueryComparisons.EQUAL,
+//					   "Newcastle upon Tyne");
+//			   
+//			   // Specify a partition query, using "Smith" as the partition key filter.
+//			   TableQuery<CameraRegistrationEntity> partitionQuery = TableQuery.from(CameraRegistrationEntity.class).where(partitionFilter);
+//		
+//			   // Loop through the results, displaying information about the entity.
+//			   for (CameraRegistrationEntity entity : cloudTable.execute(partitionQuery)) {
+//				   System.out.println(entity.getPartitionKey() +
+//						   " " + entity.getRowKey() + 
+//						   "\t" + entity.getStreet() +
+//						   "\t" + entity.getSpeedLimit());
+//			   }
+//		   }
 		} catch (Exception e) {
 			System.err.println(e.getMessage());
 		}
@@ -174,29 +177,29 @@ public class Consumer implements Runnable {
 		   cloudTable.execute(insertSighting);
 		   
 		   /*TRACE — PART 3*/
-		   for(String s :tableClient.listTables()) {
-			   // Define constants for filters.
-			   final String PARTITION_KEY = "PartitionKey";
-			   final String ROW_KEY = "RowKey";
-			   final String TIMESTAMP = "Timestamp";
-			   // Create a filter condition where the partition key is "Smith".
-			   String partitionFilter = TableQuery.generateFilterCondition(
-					   PARTITION_KEY, 
-					   QueryComparisons.EQUAL,
-					   "Car");
-			   
-			   // Specify a partition query, using "Smith" as the partition key filter.
-			   TableQuery<SightingEntity> partitionQuery = TableQuery.from(SightingEntity.class).where(partitionFilter);
-		
-			   // Loop through the results, displaying information about the entity.
-			   for (SightingEntity entity : cloudTable.execute(partitionQuery)) {
-				   System.out.println(entity.getPartitionKey() +
-						   " " + entity.getRowKey() + 
-						   "\t" + entity.getVehicleSpeed() +
-						   "\t" + entity.getSpeedLimit() +
-						   "\t" + entity.getCameraUID());
-			   }
-		   }
+//		   for(String s :tableClient.listTables()) {
+//			   // Define constants for filters.
+//			   final String PARTITION_KEY = "PartitionKey";
+//			   final String ROW_KEY = "RowKey";
+//			   final String TIMESTAMP = "Timestamp";
+//			   // Create a filter condition where the partition key is "Smith".
+//			   String partitionFilter = TableQuery.generateFilterCondition(
+//					   PARTITION_KEY, 
+//					   QueryComparisons.EQUAL,
+//					   "Car");
+//			   
+//			   // Specify a partition query, using "Smith" as the partition key filter.
+//			   TableQuery<SightingEntity> partitionQuery = TableQuery.from(SightingEntity.class).where(partitionFilter);
+//		
+//			   // Loop through the results, displaying information about the entity.
+//			   for (SightingEntity entity : cloudTable.execute(partitionQuery)) {
+//				   System.out.println(entity.getPartitionKey() +
+//						   " " + entity.getRowKey() + 
+//						   "\t" + entity.getVehicleSpeed() +
+//						   "\t" + entity.getSpeedLimit() +
+//						   "\t" + entity.getCameraUID());
+//			   }
+//		   }
 		} catch (Exception e) {
 			System.err.println(e.getMessage());
 		}

@@ -5,6 +5,7 @@ import java.util.Calendar;
 import java.util.Random;
 
 import nosqlconsumer.Consumer;
+import threadflag.ThreadFlag;
 import vehicle.Vehicle;
 import vehicle.VehicleGenerator;
 import messaging.WriteMessages;
@@ -27,7 +28,7 @@ import customservicebusexceptions.TopicExistsException;
  * @author Gregory Mususa (081587717)
  *
  */
-public class SmartSpeedCamera {
+public class SmartSpeedCamera implements Runnable {
 
 	private Integer uniqueIdentifier;
 	private String streetName;
@@ -50,6 +51,13 @@ public class SmartSpeedCamera {
 		this.speedLimitMPH = maxMPH;
 		this.io = 0;
 		this.startup();
+	}
+	
+	/**
+	 * Nullary constructor
+	 */
+	public SmartSpeedCamera() {
+		
 	}
 	
 	/**
@@ -179,13 +187,9 @@ public class SmartSpeedCamera {
 	}
 	
 	/**
-	 * Method created, to test SmartSpeedCamera
-	 * @param args String arguments
+	 * The method that executes, when this class is started as a thread
 	 */
-	public static void main(String[] args) {
-		Thread consumerThread = new Thread(new Consumer());
-		consumerThread.start();
-		
+	public void run() {
 		SmartSpeedCamera cam1 = new SmartSpeedCamera(5430, "Claremont Road", "Newcastle upon Tyne", 40);
 		cam1.changeSpeedLimit(20);
 		cam1.changeStreet("Stepney Lane");
@@ -199,7 +203,7 @@ public class SmartSpeedCamera {
 		Random rnd = new Random();
 		
 		try {
-			for(int i=0; i < 12;i+=1) {
+			while(ThreadFlag.isRunning()) {
 				Thread.sleep(10000);
 				Vehicle vehc = VehicleGenerator.getRandomVehicle();
 				cams.get(rnd.nextInt(cams.size())).recordPassingVehicle(vehc.getPlate(), vehc.getType(), vehc.getSpeed());

@@ -21,6 +21,7 @@ public class UserInterface {
 		Thread cameraThread = new Thread(new SmartSpeedCamera());
 		Thread consumerThread = new Thread(new Consumer());
 		
+		
 		//Accept user input
 		String input = "";
 		while(!("exit".equalsIgnoreCase(input))) {
@@ -40,11 +41,14 @@ public class UserInterface {
 				else if(("B".equalsIgnoreCase(input)) && (!(consumerThread.isAlive()))) {
 					consumerThread.start();
 				}
-				else if("C".equalsIgnoreCase(input)) {
+				else if(("C".equalsIgnoreCase(input)) && (!(ThreadFlag.isBusy()))) {
+					ThreadFlag.setBusy();
 					StorageReader.getAllOperatingCameras();
+					ThreadFlag.unsetBusy();
 				}
-				else if("D".equalsIgnoreCase(input)) {
-					PoliceMonitor.printSpeedingVehicles();
+				else if(("D".equalsIgnoreCase(input)) && (!(ThreadFlag.isBusy()))) {
+					Thread policeMonitorThread = new Thread(new PoliceMonitor());
+					policeMonitorThread.start();
 				}
 			}
 		}

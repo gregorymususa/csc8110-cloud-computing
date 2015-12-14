@@ -34,11 +34,15 @@ public class PoliceMonitor implements Runnable {
 
 	@Override
 	public void run() {
-		
-		
+		ThreadFlag.setBusy();
+		this.printSpeedingVehicles();
+		ThreadFlag.unsetBusy();
 	}
 	
-	public static void printSpeedingVehicles() {
+	/**
+	 * Prints Speeding Vehicles to Command Line Console
+	 */
+	private void printSpeedingVehicles() {
 		//Setup PEEK_LOCK versus ReceiveAndDelete model
 		ReceiveMessageOptions opts = ReceiveMessageOptions.DEFAULT;
 		opts.setReceiveMode(ReceiveMode.PEEK_LOCK);
@@ -69,7 +73,7 @@ public class PoliceMonitor implements Runnable {
 			System.out.printf("%-25s %-25s %-25s %-25s %-25s %-25s %-25s %-25s %n", heading1, heading2, heading3, heading4, heading5, heading6, heading7, heading8);
 			System.out.println("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
 			
-			while(true) {
+			while(ThreadFlag.isRunning()) {
 				ReceiveSubscriptionMessageResult  resultSubMsg = service.receiveSubscriptionMessage(topicInfo.getPath(),subInfo.getName(),opts);
 				BrokeredMessage message = resultSubMsg.getValue();
 						
@@ -96,7 +100,7 @@ public class PoliceMonitor implements Runnable {
 					service.deleteMessage(message);
 				}
 				else {
-					System.out.print("\n");
+					System.out.print("\n---No more entries---\n");
 					break;
 				}
 			}

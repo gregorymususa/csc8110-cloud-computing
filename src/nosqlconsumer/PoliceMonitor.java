@@ -58,7 +58,17 @@ public class PoliceMonitor implements Runnable {
 			String subName = "SpeedingVehicles";
 			SubscriptionInfo subInfo = WriteMessages.initializeSubscription(subName, topicInfo, service);
 			
-					
+			String heading1 = "Plate number";
+			String heading2 = "Vehicle type";
+			String heading3 = "Vehicle Speed";
+			String heading4 = "Camera UID";
+			String heading5 = "Camera Street";
+			String heading6 = "Camera City";
+			String heading7 = "Speed Limit";
+			String heading8 = "isPriority";
+			System.out.printf("%-25s %-25s %-25s %-25s %-25s %-25s %-25s %-25s %n", heading1, heading2, heading3, heading4, heading5, heading6, heading7, heading8);
+			System.out.println("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+			
 			while(true) {
 				ReceiveSubscriptionMessageResult  resultSubMsg = service.receiveSubscriptionMessage(topicInfo.getPath(),subInfo.getName(),opts);
 				BrokeredMessage message = resultSubMsg.getValue();
@@ -67,6 +77,7 @@ public class PoliceMonitor implements Runnable {
 					InputStream inputStream = message.getBody();
 					
 					Scanner scanner = new Scanner(inputStream);
+					
 					while(scanner.hasNextLine()) {
 						String line = scanner.nextLine();
 						String[] line_explode = line.split(",");
@@ -75,10 +86,10 @@ public class PoliceMonitor implements Runnable {
 						Double speedLimit = Integer.parseInt(line_explode[6]) * 1.1;
 						
 						if(speed >= speedLimit) {
-							System.out.println(line + "\t PRIORITY");
+							System.out.printf("%-25s %-25s %-25s %-25s %-25s %-25s %-25s %-25s %n",line_explode[0],line_explode[1],line_explode[2],line_explode[3],line_explode[4],line_explode[5],line_explode[6],"PRIORITY");
 						}
 						else {
-							System.out.println(line);
+							System.out.printf("%-25s %-25s %-25s %-25s %-25s %-25s %-25s %-25s %n",line_explode[0],line_explode[1],line_explode[2],line_explode[3],line_explode[4],line_explode[5],line_explode[6],"");
 						}
 					}
 					scanner.close();

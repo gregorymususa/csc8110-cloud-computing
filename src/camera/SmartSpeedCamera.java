@@ -137,6 +137,48 @@ public class SmartSpeedCamera implements Runnable {
 		    // Send message to the topic
 		    service.sendTopicMessage(topicName, message);
 		    
+		    this.recordSpeedingVehicle(vehiclePlate,vehicleType,speed,service);
+		    
+		} catch (TopicExistsException | ServiceException e) {
+			System.err.println(e.getMessage());
+		}
+	}
+	
+	/**
+	 * Record speeding vehicle — part 4
+	 * @param vehiclePlate
+	 * @param vehicleType
+	 * @param speed
+	 * @param service
+	 */
+	private void recordSpeedingVehicle(String vehiclePlate, String vehicleType, Integer speed, ServiceBusContract service) {
+		try {
+			//Initialise Topic
+			String topicName = "SmartSpeedCameras";
+			TopicInfo topicInfo = WriteMessages.initializeTopic(topicName,service);
+			
+			//Initialise Subscriptions
+			String subName = "SpeedingVehicles";
+			SubscriptionInfo subInfo = WriteMessages.initializeSubscription(subName, topicInfo, service);
+			
+			//Set Rules
+			RuleInfo ruleInfo = new RuleInfo("speed");
+			ruleInfo.withSqlExpressionFilter("speed >= " + this.speedLimitMPH.toString());
+			
+			if(!(WriteMessages.ruleExists(ruleInfo.getName(),subInfo,topicInfo,service))) {
+				CreateRuleResult ruleResult = service.createRule(topicName, subName, ruleInfo);
+				service.deleteRule(topicName, subName, "$Default");
+			}
+			
+			// Create message, passing a string message for the body
+		    BrokeredMessage message = new BrokeredMessage(vehiclePlate + "," + vehicleType + "," + speed + "," + this.uniqueIdentifier.toString() + "," + this.streetName + "," + this.city + "," + this.speedLimitMPH.toString() + "," + this.startupTimestamp);
+		    
+		    // Set some additional custom app-specific property
+		    message.setProperty("speed", speed.intValue());
+		    
+		    // Send message to the topic
+		    service.sendTopicMessage(topicName, message);
+		    
 		} catch (TopicExistsException | ServiceException e) {
 			System.err.println(e.getMessage());
 		}

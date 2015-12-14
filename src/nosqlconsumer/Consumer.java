@@ -30,6 +30,7 @@ import entities.SightingEntity;
  * Consumer is ran in Thread, so it can execute continuously
  * Reads every 30 seconds, to avoid overburdening the Service Bus, and accruing unnecessary costs
  * 
+ * Reads messages from Service Bus — then prints them to command line or persits them to nosql storage
  * @author Gregory Mususa (081587717)
  *
  */

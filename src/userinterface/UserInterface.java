@@ -31,7 +31,9 @@ public class UserInterface {
 			"\n" + "Enter \"A\" to start Cameras" +
 			"\n" + "Enter \"B\" to start NoSQL Consumers" +
 			"\n" + "Enter \"C\" to see all operating Cameras" +
-			"\n" + "Enter \"D\" to see all Speeding Vehicles");
+			"\n" + "Enter \"D\" to see all Speeding Vehicles" +
+			"\n" + "Enter \"E\" to retrieve all Speeders considered PRIORITY" +
+			"\n" + "Enter \"exit\" to shutdown the program");
 			
 			if(scanner.hasNextLine()) {
 				input = scanner.nextLine();
@@ -49,6 +51,11 @@ public class UserInterface {
 				else if(("D".equalsIgnoreCase(input)) && (!(ThreadFlag.isBusy()))) {
 					Thread policeMonitorThread = new Thread(new PoliceMonitor());
 					policeMonitorThread.start();
+				}
+				else if(("E".equalsIgnoreCase(input)) && (!(ThreadFlag.isBusy()))) {
+					ThreadFlag.setBusy();
+					StorageReader.getAllPrioritySpeeders();
+					ThreadFlag.unsetBusy();
 				}
 			}
 		}

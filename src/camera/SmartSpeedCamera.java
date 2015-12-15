@@ -101,6 +101,9 @@ public class SmartSpeedCamera implements Runnable {
 	
 	/**
 	 * Record vehicle passing camera, and send these details to the Service Bus
+	 * 
+	 * If a Vehicle is going faster than the speed limit, recordSpeedingVehicle() will do something about it
+	 * 
 	 * @param vehiclePlate
 	 * @param vehicleType
 	 * @param speed
@@ -145,7 +148,8 @@ public class SmartSpeedCamera implements Runnable {
 	}
 	
 	/**
-	 * Record speeding vehicle — part 4
+	 * Record vehicle, if it is Speeding — and notify system, by sending message to a Service Bus Subscription
+	 * This makes use of the Subscriptions with Filters feature of Azure Service Bus — part 4
 	 * @param vehiclePlate
 	 * @param vehicleType
 	 * @param speed

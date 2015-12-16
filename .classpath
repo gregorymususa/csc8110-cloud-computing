@@ -7,5 +7,6 @@
 			<attribute name="org.eclipse.jst.component.dependency" value="/WEB-INF/lib"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="//campus/home/Home2014/a8158771/Downloads/sqljdbc_4.2.6420.100_enu.tar/sqljdbc_4.2/enu/sqljdbc42.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

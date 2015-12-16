@@ -176,7 +176,7 @@ public class PoliceMonitor implements Runnable {
 	}
 	
 	/**
-	 * Store speeders to the Service Bus Queue, for a "isVehicleStolen" check later
+	 * Store speeders to the Service Bus Queue ("potentiallystolenvehicle" queue), for a "isVehicleStolen" check later by VehicleCheck (Part 5)
 	 * @param speeder to check
 	 */
 	private void saveSpeedersToStolenCheckQueue(SpeederEntity speeder) {

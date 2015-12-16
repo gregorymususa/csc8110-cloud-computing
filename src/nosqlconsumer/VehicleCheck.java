@@ -13,6 +13,9 @@ import com.microsoft.azure.storage.queue.CloudQueue;
 import com.microsoft.azure.storage.queue.CloudQueueClient;
 import com.microsoft.azure.storage.queue.CloudQueueMessage;
 
+import java.sql.*;
+import com.microsoft.sqlserver.jdbc.*;
+
 /**
  * Part 5 implemented
  * @author Gregory Mususa (081587717)
@@ -76,8 +79,10 @@ public class VehicleCheck implements Runnable {
 			    
 		    	if (retrievedMessage != null) {
 		    		String plate = retrievedMessage.getMessageContentAsString().split(",")[0];
-			    
-		    		checkedVehicles.put(plate, VehicleCheck.isVehicleStolen(plate));
+		    		Boolean isStolen = VehicleCheck.isVehicleStolen(plate);
+		    		
+		    		checkedVehicles.put(plate, isStolen);
+		    		VehicleCheck.saveToSQL(plate, isStolen.toString());
 		    		
 		    		// Process the message in less than 30 seconds, and then delete the message.
 			        queue.deleteMessage(retrievedMessage);
@@ -98,10 +103,8 @@ public class VehicleCheck implements Runnable {
 	public static void printResults() {
 		Iterator<String> keys = checkedVehicles.keySet().iterator();
 		
-		System.out.println("Plate \t isStolen");
-		
 		String heading1 = "Plate";
-		String heading2 = "Heading";
+		String heading2 = "isStolen";
 		if(!(checkedVehicles.isEmpty())) {
 			System.out.printf("%-20s %-20s %n", heading1, heading2);
 			System.out.println("-----------------------------------------------------------------");
@@ -109,11 +112,88 @@ public class VehicleCheck implements Runnable {
 		
 		while(keys.hasNext()) {
 			String key = keys.next();
-//			System.out.println(key + "\t" + checkedVehicles.get(key));
 			System.out.printf("%-20s %-20s %n", key, checkedVehicles.get(key));
 		}
 		
 		checkedVehicles.clear();
+	}
+	
+	/**
+	 * Persit results of VehicleCheck, to a Relational database
+	 * @param plate number to be persisted
+	 * @param isStolen status to be persisted
+	 */
+	private static void saveToSQL(String plate, String isStolen) {
+		//TODO
+		try {
+			String connectionString =
+	            "jdbc:sqlserver://gregorymsql.database.windows.net:1433;"
+	            + "database=gregorymsql;"
+	            + "user=gregorym@gregorymsql;"
+	            + "password=MiN4wew77uu;"
+	            + "encrypt=true;"
+	            + "trustServerCertificate=false;"
+	            + "hostNameInCertificate=*.database.windows.net;"
+	            + "loginTimeout=30;";
+	
+	        // Declare the JDBC objects.
+	        Connection connection = DriverManager.getConnection(connectionString);;
+	        Statement statement = null;
+	        ResultSet resultSet = null;
+	        PreparedStatement createTablePrepStat = null;
+	        PreparedStatement insertToTablePrepStat = null;
+	        
+	        connection.setAutoCommit(true);
+	        
+	        /* *********************************** */
+	        /* CREATE THE TABLE — RUN ONCE (START) */
+	        /* *********************************** */
+//	        String createTableSQL = 
+//	        	"CREATE TABLE VehicleCheckResults" +
+//				"(" +
+//	        	"id INT PRIMARY KEY IDENTITY(1,1)," +
+//				"plate VARCHAR(12)," +
+//				"isStolen  VARCHAR(12)" +
+//				");";
+//	        
+//	        createTablePrepStat = connection.prepareStatement(createTableSQL);
+//	        createTablePrepStat.execute();
+	        /* *********************************** */
+	        /* CREATE THE TABLE — RUN ONCE (END) */
+	        /* *********************************** */
+	        
+	        String insertToTableSQL = 
+	        	"INSERT INTO VehicleCheckResults(plate, isStolen) VALUES" +
+				"('" + plate + "','" + isStolen + "');";
+		        
+	        insertToTablePrepStat = connection.prepareStatement(insertToTableSQL);
+	        insertToTablePrepStat.execute();
+	        
+	        // Close everything
+	        if(createTablePrepStat != null) {
+	        	createTablePrepStat.close();
+	        }
+	        
+	        if(insertToTablePrepStat != null) {
+	        	insertToTablePrepStat.close();
+	        }
+	        
+	        if(resultSet != null) {
+	        	resultSet.close();
+	        }
+	        
+	        if(statement != null) {
+	        	statement.close();
+	        }
+	        
+	        if(connection != null) {
+	        	connection.close();
+	        }
+	        
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+        
 	}
 
 }

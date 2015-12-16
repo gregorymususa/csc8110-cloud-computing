@@ -1,12 +1,15 @@
 package nosqlconsumer;
 
 import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.security.InvalidKeyException;
 import java.util.Scanner;
 
 import threadflag.ThreadFlag;
 import messaging.WriteMessages;
 
 import com.microsoft.azure.storage.CloudStorageAccount;
+import com.microsoft.azure.storage.StorageException;
 import com.microsoft.azure.storage.table.CloudTable;
 import com.microsoft.azure.storage.table.CloudTableClient;
 import com.microsoft.azure.storage.table.TableOperation;
@@ -23,6 +26,9 @@ import com.microsoft.windowsazure.services.servicebus.models.ReceiveMode;
 import com.microsoft.windowsazure.services.servicebus.models.ReceiveSubscriptionMessageResult;
 import com.microsoft.windowsazure.services.servicebus.models.SubscriptionInfo;
 import com.microsoft.windowsazure.services.servicebus.models.TopicInfo;
+//Include the following imports to use queue APIs.
+import com.microsoft.azure.storage.*;
+import com.microsoft.azure.storage.queue.*;
 
 import customservicebusexceptions.TopicExistsException;
 import entities.CameraRegistrationEntity;
@@ -119,6 +125,7 @@ public class PoliceMonitor implements Runnable {
 						}
 						
 						this.saveSpeedersToStorage("SpeedingVehicles", speeder);
+						this.saveSpeedersToStolenCheckQueue(speeder);
 					}
 					scanner.close();
 					service.deleteMessage(message);
@@ -163,33 +170,44 @@ public class PoliceMonitor implements Runnable {
 		   // Submit the operation to the table service
 		   cloudTable.execute(insertSpeeder);
 		   
-		   /*TRACE — PART 4*/
-//		   for(String s :tableClient.listTables()) {
-//			   // Define constants for filters.
-//			   final String PARTITION_KEY = "PartitionKey";
-//			   final String ROW_KEY = "RowKey";
-//			   final String TIMESTAMP = "Timestamp";
-//			   // Create a filter condition where the partition key is "Smith".
-//			   String partitionFilter = TableQuery.generateFilterCondition(
-//					   PARTITION_KEY, 
-//					   QueryComparisons.EQUAL,
-//					   "5431");
-//			   
-//			   // Specify a partition query, using "Smith" as the partition key filter.
-//			   TableQuery<SpeederEntity> partitionQuery = TableQuery.from(SpeederEntity.class).where(partitionFilter);
-//		
-//			   // Loop through the results, displaying information about the entity.
-//			   for (SpeederEntity entity : cloudTable.execute(partitionQuery)) {
-//				   System.out.println("TRACE:\t" + entity.getPartitionKey() +
-//						   "\t" + entity.getRowKey() + 
-//						   "\t" + entity.getVehicleSpeed() +
-//						   "\t" + entity.getSpeedLimit() +
-//						   "\t" + entity.getVehicleType());
-//			   }
-//		   }
 		} catch (Exception e) {
 			System.err.println(e.getMessage());
 		}
+	}
+	
+	/**
+	 * Store speeders to the Service Bus Queue, for a "isVehicleStolen" check later
+	 * @param speeder to check
+	 */
+	private void saveSpeedersToStolenCheckQueue(SpeederEntity speeder) {
+		// Define the connection-string with your values.
+		String storageConnectionString = 
+			"DefaultEndpointsProtocol=http;" + 
+			"AccountName=gregorymnosql;" + 
+			"AccountKey=cj6cWnXwS8sHPPTvLKdXdUzN5aNfoZsu703DntYyrWQ4vPkCkdEaN4xfj0V1Z28IaCA/uYEfUBCnnpgVDu6Uzw==";
+		try {
+			// Retrieve storage account from connection-string.
+		    CloudStorageAccount storageAccount;
+			storageAccount = CloudStorageAccount.parse(storageConnectionString);
+			
+			// Create the queue client.
+			CloudQueueClient queueClient = storageAccount.createCloudQueueClient();
+			
+			// Retrieve a reference to a queue.
+			CloudQueue queue = queueClient.getQueueReference("potentiallystolenvehicle");
+			
+			// Create the queue if it doesn't already exist.
+			queue.createIfNotExists();
+			
+			// Create a message and add it to the queue.
+		    CloudQueueMessage message = new CloudQueueMessage(speeder.getRowKey() + "," + speeder.getVehicleType() + "," + speeder.getVehicleSpeed() + "," + speeder.getPartitionKey() + "," + speeder.getCameraStreet() + "," + speeder.getCameraCity() + "," + speeder.getSpeedLimit());
+		    queue.addMessage(message);
+		    
+		} catch (InvalidKeyException | URISyntaxException | StorageException e) {
+			e.printStackTrace();
+		}
+
+	   
 	}
 
 }

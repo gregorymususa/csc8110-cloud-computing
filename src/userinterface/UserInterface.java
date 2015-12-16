@@ -5,6 +5,7 @@ import java.util.Scanner;
 import camera.SmartSpeedCamera;
 import nosqlconsumer.Consumer;
 import nosqlconsumer.PoliceMonitor;
+import nosqlconsumer.VehicleCheck;
 import nosqlreader.StorageReader;
 import threadflag.ThreadFlag;
 
@@ -20,6 +21,7 @@ public class UserInterface {
 
 		Thread cameraThread = new Thread(new SmartSpeedCamera());
 		Thread consumerThread = new Thread(new Consumer());
+		Thread vehicleCheck = new Thread(new VehicleCheck());
 		
 		
 		//Accept user input
@@ -30,9 +32,11 @@ public class UserInterface {
 			System.out.println("Menu Options" + 
 			"\n" + "Enter \"A\" to start Cameras" +
 			"\n" + "Enter \"B\" to start NoSQL Consumers" +
-			"\n" + "Enter \"C\" to see all operating Cameras" +
-			"\n" + "Enter \"D\" to see all Speeding Vehicles" +
-			"\n" + "Enter \"E\" to retrieve all Speeders considered PRIORITY" +
+			"\n" + "Enter \"C\" to start Vehicle Check" +
+			"\n" + "Enter \"D\" to see all operating Cameras" +
+			"\n" + "Enter \"E\" to see all Speeding Vehicles in the SpeedingVehicle subscription (on the Service Bus)" +
+			"\n" + "Enter \"F\" to retrieve all Speeders considered PRIORITY, that the Police monitor persisted to the Azure Table Storage (table SpeedingVehicles)" +
+			"\n" + "Enter \"G\" to check if speeding vehicles are stolen" +
 			"\n" + "Enter \"exit\" to shutdown the program");
 			
 			if(scanner.hasNextLine()) {
@@ -43,19 +47,25 @@ public class UserInterface {
 				else if(("B".equalsIgnoreCase(input)) && (!(consumerThread.isAlive()))) {
 					consumerThread.start();
 				}
-				else if(("C".equalsIgnoreCase(input)) && (!(ThreadFlag.isBusy()))) {
+				else if(("C".equalsIgnoreCase(input)) && (!(vehicleCheck.isAlive()))) {
+					vehicleCheck.start();
+				}
+				else if(("D".equalsIgnoreCase(input)) && (!(ThreadFlag.isBusy()))) {
 					ThreadFlag.setBusy();
 					StorageReader.getAllOperatingCameras();
 					ThreadFlag.unsetBusy();
 				}
-				else if(("D".equalsIgnoreCase(input)) && (!(ThreadFlag.isBusy()))) {
+				else if(("E".equalsIgnoreCase(input)) && (!(ThreadFlag.isBusy()))) {
 					Thread policeMonitorThread = new Thread(new PoliceMonitor());
 					policeMonitorThread.start();
 				}
-				else if(("E".equalsIgnoreCase(input)) && (!(ThreadFlag.isBusy()))) {
+				else if(("F".equalsIgnoreCase(input)) && (!(ThreadFlag.isBusy()))) {
 					ThreadFlag.setBusy();
 					StorageReader.getAllPrioritySpeeders();
 					ThreadFlag.unsetBusy();
+				}
+				else if(("G".equalsIgnoreCase(input)) && (!(ThreadFlag.isBusy()))) {
+					VehicleCheck.printResults();
 				}
 			}
 		}

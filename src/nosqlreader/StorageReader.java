@@ -2,6 +2,10 @@ package nosqlreader;
 
 import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
 
 import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.azure.storage.StorageException;
@@ -42,13 +46,6 @@ public class StorageReader {
 			CloudTable cloudTable = tableClient.getTableReference("cameraregistrations");
 			
 			TableQuery<CameraRegistrationEntity> partitionQuery = TableQuery.from(CameraRegistrationEntity.class);
-			
-//			String PARTITION_KEY = "PartitionKey";
-//			String partitionFilter = TableQuery.generateFilterCondition(
-//					   PARTITION_KEY, 
-//					   QueryComparisons.EQUAL,
-//					   "Newcastle upon Tyne");
-//			TableQuery<CameraRegistrationEntity> partitionQuery = TableQuery.from(CameraRegistrationEntity.class).where(partitionFilter);
 			
 			//Loop through the results, displaying information about the entity.
 			String heading1 = "City";
@@ -124,6 +121,58 @@ public class StorageReader {
 			}
 		} catch (InvalidKeyException | URISyntaxException | StorageException e) {
 			System.err.println(e.getMessage());
+		}
+	}
+	
+	/**
+	 * Prints to screen a list of all vehicles, marked as stolen, by VehicleCheck
+	 */
+	public static void getAllStolenVehicles() {
+		try {
+			String connectionString =
+	            "jdbc:sqlserver://gregorymsql.database.windows.net:1433;"
+	            + "database=gregorymsql;"
+	            + "user=gregorym@gregorymsql;"
+	            + "password=MiN4wew77uu;"
+	            + "encrypt=true;"
+	            + "trustServerCertificate=false;"
+	            + "hostNameInCertificate=*.database.windows.net;"
+	            + "loginTimeout=30;";
+	
+	        // Declare the JDBC objects.
+	        Connection connection = DriverManager.getConnection(connectionString);
+	        Statement statement = null;
+	        ResultSet resultSet = null;
+	        
+	        String selectSQL = "SELECT plate, isStolen FROM VehicleCheckResults WHERE isStolen = 'true';";
+	        statement = connection.createStatement();
+	        resultSet = statement.executeQuery(selectSQL);
+	        
+	        String heading1 = "Plate";
+			String heading2 = "isStolen";
+			System.out.printf("%-20s %-20s %n", heading1, heading2);
+			System.out.println("-----------------------------------------------------------------");
+			
+	        while (resultSet.next()) {
+	        	System.out.printf("%-20s %-20s %n", resultSet.getString(1), resultSet.getString(2));
+	        }
+	        
+	        System.out.print("\n---No more entries---\n");
+	        
+	        // Close everything
+	        if(resultSet != null) {
+	        	resultSet.close();
+	        }
+	        
+	        if(statement != null) {
+	        	statement.close();
+	        }
+	        
+	        if(connection != null) {
+	        	connection.close();
+	        }
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 }

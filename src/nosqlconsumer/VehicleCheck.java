@@ -142,7 +142,7 @@ public class VehicleCheck implements Runnable {
 	            + "loginTimeout=30;";
 	
 	        // Declare the JDBC objects.
-	        Connection connection = DriverManager.getConnection(connectionString);;
+	        Connection connection = DriverManager.getConnection(connectionString);
 	        Statement statement = null;
 	        ResultSet resultSet = null;
 	        PreparedStatement createTablePrepStat = null;

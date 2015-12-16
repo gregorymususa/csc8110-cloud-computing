@@ -14,6 +14,7 @@ import com.microsoft.azure.storage.queue.CloudQueueClient;
 import com.microsoft.azure.storage.queue.CloudQueueMessage;
 
 import java.sql.*;
+
 import com.microsoft.sqlserver.jdbc.*;
 
 /**
@@ -33,8 +34,13 @@ public class VehicleCheck implements Runnable {
 	 * Executes when Thread.start() is executed
 	 */
 	public void run() {
-		while(ThreadFlag.isRunning()) {
-			VehicleCheck.getMsgsFromQueue();
+		try {
+			while(ThreadFlag.isRunning()) {
+				VehicleCheck.getMsgsFromQueue();
+				Thread.sleep(10000);//check queue again after 10 seconds
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
 		}
 	}
 	
@@ -124,7 +130,6 @@ public class VehicleCheck implements Runnable {
 	 * @param isStolen status to be persisted
 	 */
 	private static void saveToSQL(String plate, String isStolen) {
-		//TODO
 		try {
 			String connectionString =
 	            "jdbc:sqlserver://gregorymsql.database.windows.net:1433;"

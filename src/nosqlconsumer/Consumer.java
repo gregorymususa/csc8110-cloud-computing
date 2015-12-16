@@ -53,7 +53,7 @@ public class Consumer implements Runnable {
 				
 				readSighting(service,opts);
 				
-				Thread.sleep(30000);//check message queue every 30 seconds
+				Thread.sleep(30000);//check subscription every 30 seconds
 			}
 		    catch (TopicExistsException | ServiceException | InterruptedException e) {
 				System.err.println(e.getMessage());

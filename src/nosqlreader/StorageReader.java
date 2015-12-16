@@ -18,7 +18,7 @@ import entities.CameraRegistrationEntity;
 import entities.SpeederEntity;
 
 /**
- * Query Application that reads from the Azure Table Storage (NoSQL reader)
+ * Query Application that reads from the Azure Table Storage (NoSQL reader), and Azure SQL Database
  * @author Gregory Mususa 081587717
  */
 public class StorageReader {

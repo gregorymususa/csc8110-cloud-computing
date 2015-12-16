@@ -40,7 +40,7 @@ public class UserInterface {
 			"\n" + "Enter \"F\" Query Application to print out, all Speeders considered PRIORITY, that the Police monitor persisted to the Azure Table Storage (table SpeedingVehicles) (part 4 task 4)" +
 			"\n" + "Enter \"G\" Police Monitor to print out, all Speed violation sightings (retrieved from Service Bus Subscription \"SpeedingVehicles\") (part 4 task 1 and task 2)" +
 			"\n" + "Enter \"H\" Vehicle Check, prints results of it checking if Speeding Vehicles are stolen (retrieved from Queue \"potentiallystolenvehicle\") (part 5)" +
-			"\n" + "Enter \"I\" Query Application to print out, all stolen vehicles (retrieved from SQL table \"VehicleCheckResults\")" +
+			"\n" + "Enter \"I\" Query Application to print out, all stolen vehicles (and only stolen vehicles) (retrieved from SQL table \"VehicleCheckResults\") (part 6 task 2)" +
 			"\n" + "Enter \"exit\" to shutdown the program (wait for 0 to 2 minutes, while the Consumer, Police Monitor, and Vehicle Check are shutdown safely\n-----\n");
 			
 			if(scanner.hasNextLine()) {

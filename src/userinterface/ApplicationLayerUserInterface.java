@@ -24,8 +24,6 @@ import threadflag.ThreadFlag;
  * 
  * 		e. The history of all vehicles marked as stolen — Query Application, queries the SQL database (WHERE isStolen = true) — returning entire history of stolen vehicles (and only stolen vehicles)
  * 
- * 	2. Provides a way to safely stop the NoSQL Consumer, Police Monitor, and Vehicle Check
- * 
  * @author Gregory Mususa (081587717)
  *
  */
@@ -35,7 +33,6 @@ public class ApplicationLayerUserInterface {
 		//Accept user input
 		String input = "";
 		while(!("exit".equalsIgnoreCase(input))) {
-			Scanner scanner = new Scanner(System.in);
 			
 			System.out.println("\n-----\nMenu Options" + 
 			"\n" + "Enter \"A\" to get Query Application to print out, all Camera Registrations (part 3)" +
@@ -43,7 +40,9 @@ public class ApplicationLayerUserInterface {
 			"\n" + "Enter \"C\" to get Query Application to print out, all Speeders considered PRIORITY, that the Police monitor persisted to the Azure Table Storage (table SpeedingVehicles) (part 4 task 4)" +
 			"\n" + "Enter \"D\" to get Vehicle Check to print results, of it checking if Speeding Vehicles are stolen (retrieved from Queue \"potentiallystolenvehicle\") (part 5)" +
 			"\n" + "Enter \"E\" to get Query Application to print out, all stolen vehicles (and only stolen vehicles) (retrieved from SQL table \"VehicleCheckResults\") (part 6 task 2)" +
-			"\n" + "Enter \"exit\" to safely shutdown the program (wait for 0 to 2 minutes, while the Consumer, Police Monitor, and Vehicle Check are shutdown safely\n-----\n");
+			"\n" + "Enter \"exit\" to safely shutdown the Application Layer - User Interface program\n-----\n");
+			
+			Scanner scanner = new Scanner(System.in);
 			
 			if(scanner.hasNextLine()) {
 				input = scanner.nextLine();

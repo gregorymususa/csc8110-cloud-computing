@@ -9,6 +9,24 @@ import java.util.Random;
  */
 public class VehicleGenerator {
 
+	private static int vehicleRate;
+	
+	/**
+	 * Sets the rate at which Vehicles should be generated (Part 1, Task 2)
+	 * @param vRate the Vehicle Rate as an <code>int</code>
+	 */
+	public static final void setVehicleRate(int vRate) {
+		vehicleRate = vRate;
+	}
+	
+	/**
+	 * Returns the rate at which Vehicles should be generated (Part 1, Task 2)
+	 * @return <code>vehicleRate</code>
+	 */
+	public static final int getVehicleRate() {
+		return vehicleRate;
+	}
+	
 	/**
 	 * Generate a random <code>Vehicle</code>
 	 * @return <code>Vehicle</code> with randomly generated — number plate, vehicle type, and vehicle speed

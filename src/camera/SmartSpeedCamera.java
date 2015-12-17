@@ -3,6 +3,7 @@ package camera;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Random;
+import java.util.Scanner;
 
 import nosqlconsumer.Consumer;
 import threadflag.ThreadFlag;
@@ -61,6 +62,23 @@ public class SmartSpeedCamera implements Runnable {
 	}
 	
 	/**
+	 * Runs when Thread.start() is called
+	 */
+	public void run() {
+		int threadSleepTime = 60000/VehicleGenerator.getVehicleRate();		
+		
+		try {
+			while(ThreadFlag.isRunning()) {
+				Thread.sleep(threadSleepTime);		
+				Vehicle vehc = VehicleGenerator.getRandomVehicle();
+				this.recordPassingVehicle(vehc.getPlate(), vehc.getType(), vehc.getSpeed());
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
 	 * Starts up the camera, and broadcasts to the rest of the system, camera's uid, street name, city, speed limit, startupTimestamp
 	 */
 	private final void startup() {
@@ -73,7 +91,7 @@ public class SmartSpeedCamera implements Runnable {
 	 * Use to change camera's speed limit — causes camera to restart (issuing, a new timestamp)
 	 * @param maxMPH new speed limit
 	 */
-	public void changeSpeedLimit(Integer maxMPH) {
+	public final void changeSpeedLimit(Integer maxMPH) {
 		this.speedLimitMPH = maxMPH;
 		this.io = 0;
 		this.startup();
@@ -84,7 +102,7 @@ public class SmartSpeedCamera implements Runnable {
 	 * Useful when camera is mounted within police vehicle
 	 * @param newStreetName is the name of the new street, where the camera is currently located
 	 */
-	public void changeStreet(String newStreetName) {
+	public final void changeStreet(String newStreetName) {
 		this.streetName = newStreetName;
 		this.broadcast();
 	}
@@ -94,7 +112,7 @@ public class SmartSpeedCamera implements Runnable {
 	 * Useful when camera is mounted within police vehicle
 	 * @param newCityName is the name of the new city, where the camera is currently located
 	 */
-	public void changeCity(String newCityName) {
+	public final void changeCity(String newCityName) {
 		this.city = newCityName;
 		this.broadcast();
 	}
@@ -108,7 +126,7 @@ public class SmartSpeedCamera implements Runnable {
 	 * @param vehicleType
 	 * @param speed
 	 */
-	public void recordPassingVehicle(String vehiclePlate, String vehicleType, Integer speed) {
+	public final void recordPassingVehicle(String vehiclePlate, String vehicleType, Integer speed) {
 		//Create Service Bus Contract
 		Configuration config = ServiceBusConfiguration.configureWithSASAuthentication("gregorym","RootManageSharedAccessKey","/RD1rhL/bNXefoNBZ6pbv97OhYNx9czsvO7J6eM/mFc=",".servicebus.windows.net");
 		ServiceBusContract service = ServiceBusService.create(config);
@@ -155,7 +173,7 @@ public class SmartSpeedCamera implements Runnable {
 	 * @param speed
 	 * @param service
 	 */
-	private void recordSpeedingVehicle(String vehiclePlate, String vehicleType, Integer speed, ServiceBusContract service) {
+	private final void recordSpeedingVehicle(String vehiclePlate, String vehicleType, Integer speed, ServiceBusContract service) {
 		try {
 			//Initialise Topic
 			String topicName = "SmartSpeedCameras";
@@ -195,7 +213,7 @@ public class SmartSpeedCamera implements Runnable {
 	 * 
 	 * The message will be Comma Delimited (CSV) — uid,street,city,speedLimitMPH,startupTimestamp (example: 5430,Claremont Road,Newcastle,70)
 	 */
-	public void broadcast() {
+	private final void broadcast() {
 		//Create Service Bus Contract
 		Configuration config = ServiceBusConfiguration.configureWithSASAuthentication("gregorym","RootManageSharedAccessKey","/RD1rhL/bNXefoNBZ6pbv97OhYNx9czsvO7J6eM/mFc=",".servicebus.windows.net");
 		ServiceBusContract service = ServiceBusService.create(config);
@@ -228,33 +246,6 @@ public class SmartSpeedCamera implements Runnable {
 		    service.sendTopicMessage(topicName, message);
 		    
 		} catch (TopicExistsException | ServiceException e) {
-			System.err.println(e.getMessage());
-		}
-	}
-	
-	/**
-	 * The method that executes, when this class is started as a thread
-	 */
-	public void run() {
-		SmartSpeedCamera cam1 = new SmartSpeedCamera(5430, "Claremont Road", "Newcastle upon Tyne", 40);
-		cam1.changeSpeedLimit(20);
-		cam1.changeStreet("Stepney Lane");
-		
-		SmartSpeedCamera cam2 = new SmartSpeedCamera(5431, "Walton Terrace", "Newcastle upon Tyne", 30);
-		
-		ArrayList<SmartSpeedCamera> cams = new ArrayList<SmartSpeedCamera>();
-		cams.add(cam1);
-		cams.add(cam2);
-		
-		Random rnd = new Random();
-		
-		try {
-			while(ThreadFlag.isRunning()) {
-				Thread.sleep(10000);
-				Vehicle vehc = VehicleGenerator.getRandomVehicle();
-				cams.get(rnd.nextInt(cams.size())).recordPassingVehicle(vehc.getPlate(), vehc.getType(), vehc.getSpeed());
-			}
-		} catch (InterruptedException e) {
 			System.err.println(e.getMessage());
 		}
 	}

@@ -57,22 +57,18 @@ public class ApplicationLayer {
 			vehicleCheckThread.start();
 		}
 		
-		System.out.println("NoSQL Consumer started...");
-		System.out.println("Police Monitor started...");
-		System.out.println("Vehicle Check started...");
-		
 		//Accept user input
 		String input = "";
 		while(!("exit".equalsIgnoreCase(input))) {
 			Scanner scanner = new Scanner(System.in);
 			
-			System.out.println("\n-----\nMenu Options" + 
+			String menu = "\n-----\nMenu Options" + 
 			"\n" + "Enter \"A\" to get Query Application to print out, all Camera Registrations (part 3)" +
 			"\n" + "Enter \"B\" to get Police Monitor to print out, all Speed violation sightings (retrieved from Service Bus Subscription \"SpeedingVehicles\") (part 4 task 1 and task 2)" +
 			"\n" + "Enter \"C\" to get Query Application to print out, all Speeders considered PRIORITY, that the Police monitor persisted to the Azure Table Storage (table SpeedingVehicles) (part 4 task 4)" +
 			"\n" + "Enter \"D\" to get Vehicle Check to print results, of it checking if Speeding Vehicles are stolen (retrieved from Queue \"potentiallystolenvehicle\") (part 5)" +
 			"\n" + "Enter \"E\" to get Query Application to print out, all stolen vehicles (and only stolen vehicles) (retrieved from SQL table \"VehicleCheckResults\") (part 6 task 2)" +
-			"\n" + "Enter \"exit\" to safely shutdown the program (wait for 0 to 2 minutes, while the Consumer, Police Monitor, and Vehicle Check are shutdown safely\n-----\n");
+			"\n" + "Enter \"exit\" to safely shutdown the program (wait for 0 to 2 minutes, while the Consumer, Police Monitor, and Vehicle Check are shutdown safely\n-----\n";
 			
 			if(scanner.hasNextLine()) {
 				input = scanner.nextLine();
@@ -80,26 +76,36 @@ public class ApplicationLayer {
 					ThreadFlag.setBusy();
 					StorageReader.getAllOperatingCameras();
 					ThreadFlag.unsetBusy();
+					System.out.println(menu);
 				}
 				else if(("B".equalsIgnoreCase(input)) && (!(ThreadFlag.isBusy()))) {
 					ThreadFlag.setBusy();
 					policeMonitor.printSpeedingVehicles();
 					ThreadFlag.unsetBusy();
+					System.out.println(menu);
 				}
 				else if(("C".equalsIgnoreCase(input)) && (!(ThreadFlag.isBusy()))) {
 					ThreadFlag.setBusy();
 					StorageReader.getAllPrioritySpeeders();
 					ThreadFlag.unsetBusy();
+					System.out.println(menu);
 				}
 				else if(("D".equalsIgnoreCase(input)) && (!(ThreadFlag.isBusy()))) {
 					ThreadFlag.setBusy();
 					VehicleCheck.printResults();
 					ThreadFlag.unsetBusy();
+					System.out.println(menu);
 				}
 				else if(("E".equalsIgnoreCase(input)) && (!(ThreadFlag.isBusy()))) {
 					ThreadFlag.setBusy();
 					StorageReader.getAllStolenVehicles();
 					ThreadFlag.unsetBusy();
+					System.out.println(menu);
+				}
+				else {
+					if(!("exit".equalsIgnoreCase(input))) {
+						System.out.println(menu);
+					}
 				}
 			}
 		}

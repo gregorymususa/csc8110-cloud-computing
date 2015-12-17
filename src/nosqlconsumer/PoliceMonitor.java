@@ -46,30 +46,95 @@ import entities.SpeederEntity;
  */
 public class PoliceMonitor implements Runnable {
 	
-	private ConcurrentLinkedQueue<String> speedingVehicleSubscriptionMessages = new ConcurrentLinkedQueue<String>();
+	public PoliceMonitor() {
+		
+	}
 	
 	/**
 	 * Prints Speeding Vehicles to Command Line Console
 	 */
 	public void printSpeedingVehicles() {
+		//Setup PEEK_LOCK versus ReceiveAndDelete model
+		ReceiveMessageOptions opts = ReceiveMessageOptions.DEFAULT;
+		opts.setReceiveMode(ReceiveMode.PEEK_LOCK);
 		
-		String heading1 = "Plate number";
-		String heading2 = "Vehicle type";
-		String heading3 = "Vehicle Speed";
-		String heading4 = "Camera UID";
-		String heading5 = "Camera Street";
-		String heading6 = "Camera City";
-		String heading7 = "Speed Limit";
-		String heading8 = "isPriority";
-		System.out.printf("%-25s %-25s %-25s %-25s %-25s %-25s %-25s %-25s %n", heading1, heading2, heading3, heading4, heading5, heading6, heading7, heading8);
-		System.out.println("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
-		
-		while(!(speedingVehicleSubscriptionMessages.isEmpty())) {
-			String speeder = speedingVehicleSubscriptionMessages.poll();
-			String[] speeder_explode = speeder.split(",");
-			System.out.printf("%-25s %-25s %-25s %-25s %-25s %-25s %-25s %-25s %n",speeder_explode[0],speeder_explode[1],speeder_explode[2],speeder_explode[3],speeder_explode[4],speeder_explode[5],speeder_explode[6],speeder_explode[7]);
+		//Create Service Bus Contract
+		Configuration config = ServiceBusConfiguration.configureWithSASAuthentication("gregorym","RootManageSharedAccessKey","/RD1rhL/bNXefoNBZ6pbv97OhYNx9czsvO7J6eM/mFc=",".servicebus.windows.net");
+		ServiceBusContract service = ServiceBusService.create(config);
+				
+		//Initialise Topic
+		try {
+			String topicName = "SmartSpeedCameras";
+			TopicInfo topicInfo;
+			topicInfo = WriteMessages.initializeTopic(topicName,service);
+			
+			
+			//Initialise Subscriptions
+			String subName = "SpeedingVehicles";
+			SubscriptionInfo subInfo = WriteMessages.initializeSubscription(subName, topicInfo, service);
+			
+			String heading1 = "Plate number";
+			String heading2 = "Vehicle type";
+			String heading3 = "Vehicle Speed";
+			String heading4 = "Camera UID";
+			String heading5 = "Camera Street";
+			String heading6 = "Camera City";
+			String heading7 = "Speed Limit";
+			String heading8 = "isPriority";
+			System.out.printf("%-25s %-25s %-25s %-25s %-25s %-25s %-25s %-25s %n", heading1, heading2, heading3, heading4, heading5, heading6, heading7, heading8);
+			System.out.println("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+			
+			while(true) {
+				ReceiveSubscriptionMessageResult  resultSubMsg = service.receiveSubscriptionMessage(topicInfo.getPath(),subInfo.getName(),opts);
+				BrokeredMessage message = resultSubMsg.getValue();
+						
+				if((message != null) && (message.getMessageId() != null)) {
+					InputStream inputStream = message.getBody();
+					
+					Scanner scanner = new Scanner(inputStream);
+					
+					while(scanner.hasNextLine()) {
+						String line = scanner.nextLine();
+						String[] line_explode = line.split(",");
+						
+						Integer speed = Integer.parseInt(line_explode[2]);
+						Double speedLimit = Integer.parseInt(line_explode[6]) * 1.1;
+						
+						SpeederEntity speeder = new SpeederEntity(line_explode[3],line_explode[0]); 
+						
+						
+						if(speed >= speedLimit) {
+							speeder.setVehicleType(line_explode[1]);
+							speeder.setVehicleSpeed(line_explode[2]);
+							speeder.setCameraStreet(line_explode[4]);
+							speeder.setCameraCity(line_explode[5]);
+							speeder.setSpeedLimit(line_explode[6]);
+							speeder.setPriorityStatus("PRIORITY");
+							System.out.printf("%-25s %-25s %-25s %-25s %-25s %-25s %-25s %-25s %n", line_explode[0], line_explode[1], line_explode[2], line_explode[3], line_explode[4], line_explode[5], line_explode[6], "PRIORITY");
+						}
+						else {
+							speeder.setVehicleType(line_explode[1]);
+							speeder.setVehicleSpeed(line_explode[2]);
+							speeder.setCameraStreet(line_explode[4]);
+							speeder.setCameraCity(line_explode[5]);
+							speeder.setSpeedLimit(line_explode[6]);
+							speeder.setPriorityStatus("");
+							System.out.printf("%-25s %-25s %-25s %-25s %-25s %-25s %-25s %-25s %n", line_explode[0], line_explode[1], line_explode[2], line_explode[3], line_explode[4], line_explode[5], line_explode[6], " ");
+						}
+						
+						this.saveSpeedersToStorage("SpeedingVehicles", speeder);
+						this.saveSpeedersToStolenCheckQueue(speeder);
+					}
+					scanner.close();
+					service.deleteMessage(message);
+				}
+				else {
+					break;
+				}
+			}
+		} catch (TopicExistsException | ServiceException e) {
+			System.err.println(e.getMessage());
 		}
-		System.out.println("\n---No more entries---\n");
 	}
 
 	/**
@@ -79,7 +144,7 @@ public class PoliceMonitor implements Runnable {
 		try {
 			while(ThreadFlag.isRunning()) {
 				this.monitor();
-				Thread.sleep(60000);//check subscription every 60 seconds
+				Thread.sleep(120000);//check subscription again after 2 minutes, don't be wasteful with resources, let messages build up a little
 			}
 		} catch (InterruptedException e) {
 			e.printStackTrace();
@@ -135,7 +200,7 @@ public class PoliceMonitor implements Runnable {
 							speeder.setCameraCity(line_explode[5]);
 							speeder.setSpeedLimit(line_explode[6]);
 							speeder.setPriorityStatus("PRIORITY");
-							speedingVehicleSubscriptionMessages.offer(line_explode[0] + "," + line_explode[1] + "," + line_explode[2] + "," + line_explode[3] + "," + line_explode[4] + "," + line_explode[5] + "," + line_explode[6] + "," + "PRIORITY");
+//							speedingVehicleSubscriptionMessages.offer(line_explode[0] + "," + line_explode[1] + "," + line_explode[2] + "," + line_explode[3] + "," + line_explode[4] + "," + line_explode[5] + "," + line_explode[6] + "," + "PRIORITY");
 						}
 						else {
 							speeder.setVehicleType(line_explode[1]);
@@ -144,7 +209,7 @@ public class PoliceMonitor implements Runnable {
 							speeder.setCameraCity(line_explode[5]);
 							speeder.setSpeedLimit(line_explode[6]);
 							speeder.setPriorityStatus("");
-							speedingVehicleSubscriptionMessages.offer(line_explode[0] + "," + line_explode[1] + "," + line_explode[2] + "," + line_explode[3] + "," + line_explode[4] + "," + line_explode[5] + "," + line_explode[6] + "," + " ");
+//							speedingVehicleSubscriptionMessages.offer(line_explode[0] + "," + line_explode[1] + "," + line_explode[2] + "," + line_explode[3] + "," + line_explode[4] + "," + line_explode[5] + "," + line_explode[6] + "," + " ");
 						}
 						
 						this.saveSpeedersToStorage("SpeedingVehicles", speeder);

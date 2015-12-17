@@ -23,8 +23,6 @@ import com.microsoft.sqlserver.jdbc.*;
  *
  */
 public class VehicleCheck implements Runnable {
-
-	private static ConcurrentHashMap<String,Boolean> checkedVehicles = new ConcurrentHashMap<String,Boolean>();
 	
 	public VehicleCheck() {
 		
@@ -37,7 +35,7 @@ public class VehicleCheck implements Runnable {
 		try {
 			while(ThreadFlag.isRunning()) {
 				VehicleCheck.getMsgsFromQueue();
-				Thread.sleep(10000);//check queue again after 10 seconds
+				Thread.sleep(120000);//check queue again after 2 minutes, don't be wasteful with resources, let messages build up a little
 			}
 		} catch (InterruptedException e) {
 			e.printStackTrace();
@@ -87,7 +85,6 @@ public class VehicleCheck implements Runnable {
 		    		String plate = retrievedMessage.getMessageContentAsString().split(",")[0];
 		    		Boolean isStolen = VehicleCheck.isVehicleStolen(plate);
 		    		
-		    		checkedVehicles.put(plate, isStolen);
 		    		VehicleCheck.saveToSQL(plate, isStolen.toString());
 		    		
 		    		// Process the message in less than 30 seconds, and then delete the message.
@@ -107,21 +104,49 @@ public class VehicleCheck implements Runnable {
 	 * Example: (EB81 KIB	true) (plateNumber	isVehicleStolen)
 	 */
 	public static void printResults() {
-		Iterator<String> keys = checkedVehicles.keySet().iterator();
-		
-		String heading1 = "Plate";
-		String heading2 = "isStolen";
-		if(!(checkedVehicles.isEmpty())) {
+		try {
+			// Define the connection-string with your values.
+			String storageConnectionString = 
+				"DefaultEndpointsProtocol=http;" + 
+				"AccountName=gregorymnosql;" + 
+				"AccountKey=cj6cWnXwS8sHPPTvLKdXdUzN5aNfoZsu703DntYyrWQ4vPkCkdEaN4xfj0V1Z28IaCA/uYEfUBCnnpgVDu6Uzw==";
+			
+			// Retrieve storage account from connection-string.
+		    CloudStorageAccount storageAccount = 
+		        CloudStorageAccount.parse(storageConnectionString);
+	
+		    // Create the queue client.
+		    CloudQueueClient queueClient = storageAccount.createCloudQueueClient();
+	
+		    // Retrieve a reference to a queue.
+		    CloudQueue queue = queueClient.getQueueReference("potentiallystolenvehicle");
+	
+		    String heading1 = "Plate";
+			String heading2 = "isStolen";
 			System.out.printf("%-20s %-20s %n", heading1, heading2);
 			System.out.println("-----------------------------------------------------------------");
+				
+		    while(true) {
+		    	// Retrieve the first visible message in the queue.
+			    CloudQueueMessage retrievedMessage = queue.retrieveMessage();
+			    
+		    	if (retrievedMessage != null) {
+		    		String plate = retrievedMessage.getMessageContentAsString().split(",")[0];
+		    		Boolean isStolen = VehicleCheck.isVehicleStolen(plate);
+		    		
+		    		System.out.printf("%-20s %-20s %n", plate, isStolen.toString());
+		    		VehicleCheck.saveToSQL(plate, isStolen.toString());
+		    		
+		    		// Process the message in less than 30 seconds, and then delete the message.
+			        queue.deleteMessage(retrievedMessage);
+		    	}
+		    	else {
+		    		break;
+		    	}
+		    }
+		} catch(StorageException | InvalidKeyException | URISyntaxException e) {
+			e.printStackTrace();
 		}
-		
-		while(keys.hasNext()) {
-			String key = keys.next();
-			System.out.printf("%-20s %-20s %n", key, checkedVehicles.get(key));
-		}
-		
-		checkedVehicles.clear();
 	}
 	
 	/**
